@@ -121,16 +121,7 @@ pipeline {
                         cd manifest-files
                         echo "Deleting existing Kubernetes resources..."
                         # Ignore errors if resources do not exist
-                        kubectl delete deployment mysql-deployment --ignore-not-found=true
-                        kubectl delete deployment app-deployment --ignore-not-found=true
-                        kubectl delete rs -l app=mysql --ignore-not-found=true
-                        kubectl delete rs -l app=app --ignore-not-found=true
-                        kubectl delete service mysql-service --ignore-not-found=true
-                        kubectl delete service app-service --ignore-not-found=true
-                        kubectl delete pvc mysql-pvc --ignore-not-found=true
-                        kubectl delete configmap app-config --ignore-not-found=true
-                        kubectl delete configmap mysql-init-script --ignore-not-found=true
-                        kubectl delete secret app-secrets --ignore-not-found=true
+                        kubectl delete all --all
 
                         echo "Deploying application using Kubernetes manifests..."
                         kubectl apply -f secrets.yml
