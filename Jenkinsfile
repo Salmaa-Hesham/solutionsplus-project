@@ -135,6 +135,8 @@ pipeline {
                         kubectl apply -f app-deployment.yml
                         kubectl apply -f mysql-service.yml
                         kubectl apply -f app-service.yml
+                        kubectl apply -f my-ingress.yaml
+
                         echo "Deployment completed!"
                     """
                 }
