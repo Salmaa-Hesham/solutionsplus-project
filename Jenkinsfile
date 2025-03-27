@@ -123,6 +123,8 @@ pipeline {
                         # Ignore errors if resources do not exist
                         kubectl delete deployment mysql-deployment --ignore-not-found=true
                         kubectl delete deployment app-deployment --ignore-not-found=true
+                        kubectl delete rs -l app=mysql --ignore-not-found=true
+                        kubectl delete rs -l app=app --ignore-not-found=true
                         kubectl delete service mysql-service --ignore-not-found=true
                         kubectl delete service app-service --ignore-not-found=true
                         kubectl delete pvc mysql-pvc --ignore-not-found=true
