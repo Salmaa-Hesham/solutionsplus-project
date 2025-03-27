@@ -122,9 +122,9 @@ pipeline {
                         echo "Deleting existing Kubernetes resources..."
                         # Ignore errors if resources do not exist
                         kubectl delete all --all
-                        kubectl delete pv mysql-pv --ignore-not-found=true
                         kubectl delete pvc mysql-pvc --ignore-not-found=true
-
+                        kubectl delete pv mysql-pv --ignore-not-found=true
+                        
                         echo "Deploying application using Kubernetes manifests..."
                         kubectl apply -f secrets.yml
                         kubectl apply -f configmap.yml
