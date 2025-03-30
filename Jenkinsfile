@@ -12,7 +12,7 @@ pipeline {
 
         stage('Clean old files if exist') {
             steps {
-                sh "rm -rf ~/workspace/CI-CD-project/*"  // Clean old files if exist
+                sh "rm -rf ~/workspace/CI-CD-project/trivy_reports"  // Clean old files if exist
             }
         }
 
@@ -117,7 +117,7 @@ pipeline {
                 script {
                     sh """
                         pwd
-                        cd manifest-files
+                        cd solutionsplus-project/manifest-files
                         echo "Deleting existing Kubernetes resources..."
                         # Ignore errors if resources do not exist
                         kubectl delete all --all
