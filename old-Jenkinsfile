@@ -16,6 +16,7 @@ pipeline {
                         echo "Cloning source code inside the Pod..."
                         rm -rf ~/workspace/CI-CD-project/*  # Clean old files if exist
                         git clone https://\$GITHUB_TOKEN@github.com/Salmaa-Hesham/solutionsplus-project.git
+                        mkdir -p trivy_reports_1
                         cd solutionsplus-project
                         git checkout salma
                         mkdir -p trivy_reports_1
