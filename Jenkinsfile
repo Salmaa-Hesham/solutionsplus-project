@@ -12,7 +12,7 @@ pipeline {
 
         stage('Clean old files if exist') {
             steps {
-                sh "rm -rf ~/workspace/*"  // Clean old files if exist
+                sh "rm -rf ~/workspace/CI-CD-project/*"  // Clean old files if exist
             }
         }
 
