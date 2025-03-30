@@ -18,6 +18,7 @@ pipeline {
                         git clone https://\$GITHUB_TOKEN@github.com/Salmaa-Hesham/solutionsplus-project.git
                         cd solutionsplus-project
                         git checkout salma
+                        mkdir -p trivy_reports_1
                     """
                 }
             }
@@ -61,7 +62,6 @@ pipeline {
                         cd ${appDir}
                         echo "Building and scanning Web App image..."
                         docker build -t \$IMAGE_REPO:web-img-latest -f Dockerfile .
-                        mkdir -p trivy_reports_1
                         trivy image --exit-code 1 --no-progress \$IMAGE_REPO:web-img-latest > trivy_reports_1/web-img-report.txt 2>/dev/null || true
 
                         echo "Building and scanning MySQL image..."
