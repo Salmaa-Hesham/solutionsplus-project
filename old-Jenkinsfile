@@ -1,0 +1,136 @@
+pipeline {
+    agent { label 'worker' }  // Runs the pipeline on Jenkins VM
+
+    environment {
+        GITHUB_TOKEN = credentials('github-token') // GitHub token stored in Jenkins credentials
+        DOCKER_CREDENTIALS = credentials('dockerhub-token') // Docker Hub token
+        DOCKER_HUB_USERNAME = 'salmahesham1114'  // Your Docker Hub username
+        IMAGE_REPO = 'salmahesham1114/solution_plus_project' // Docker Hub repo
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                script {
+                    sh """
+                        echo "Cloning source code inside the Pod..."
+                        rm -rf ~/workspace/CI-CD-project/*  # Clean old files if exist
+                        git clone https://\$GITHUB_TOKEN@github.com/Salmaa-Hesham/solutionsplus-project.git
+                        cd solutionsplus-project
+                        git checkout salma
+                    """
+                }
+            }
+        }
+
+        stage('Check Docker Images in Repo') {
+            steps {
+                script {
+                    def webImageExists = sh(
+                        script: "curl -s -o /dev/null -w '%{http_code}' https://hub.docker.com/v2/repositories/\$IMAGE_REPO/tags/web-img-latest/",
+                        returnStdout: true
+                    ).trim()
+
+                    def dbImageExists = sh(
+                        script: "curl -s -o /dev/null -w '%{http_code}' https://hub.docker.com/v2/repositories/\$IMAGE_REPO/tags/db-img-latest/",
+                        returnStdout: true
+                    ).trim()
+
+                    if (webImageExists != '200' || dbImageExists != '200') {
+                        echo "Docker images are missing in the repository. Proceeding to build them..."
+                        env.BUILD_IMAGES = 'true'  // Flag to trigger image building
+                    } else {
+                        echo "Both Docker images are available in the repository. Proceeding with deployment."
+                        env.BUILD_IMAGES = 'false'
+                    }
+                }
+            }
+        }
+
+        stage('Build and Scan Docker Images') {
+            when {
+                expression { env.BUILD_IMAGES == 'true' } // Only build images if they are missing
+            }
+            steps {
+                script {
+                    def appDir = "application"
+                    
+                    sh """
+                        set -e  # Exit on error
+                        pwd
+                        cd ${appDir}
+                        echo "Building and scanning Web App image..."
+                        docker build -t \$IMAGE_REPO:web-img-latest -f Dockerfile .
+                        mkdir -p trivy_reports_1
+                        trivy image --exit-code 1 --no-progress \$IMAGE_REPO:web-img-latest > trivy_reports_1/web-img-report.txt 2>/dev/null || true
+
+                        echo "Building and scanning MySQL image..."
+                        docker build -t \$IMAGE_REPO:db-img-latest -f Docker-mysql .
+                        trivy image --exit-code 1 --no-progress \$IMAGE_REPO:db-img-latest > trivy_reports_1/db-img-report.txt 2>/dev/null || true
+
+                        echo "Build and security scan completed!"
+                    """
+                }
+            }
+        }
+
+        stage('Push Docker Images') {
+            steps {
+                script {
+                    sh """
+                        set -e
+                        echo "Logging into Docker Hub..."
+                        echo "\$DOCKER_CREDENTIALS_PSW" | docker login -u "\$DOCKER_CREDENTIALS_USR" --password-stdin
+
+                        echo "Pushing Web App image..."
+                        docker push \$IMAGE_REPO:web-img-latest
+
+                        echo "Pushing MySQL image..."
+                        docker push \$IMAGE_REPO:db-img-latest
+
+                        echo "Docker images pushed successfully!"
+                        docker logout
+                    """
+                }
+            }
+        }
+
+
+        stage('Archive Trivy Reports') {
+            steps {
+                archiveArtifacts artifacts: 'trivy_reports_1/*.txt', fingerprint: true
+                echo "Trivy reports archived for review."
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                script {
+                    sh """
+                        pwd
+                        cd manifest-files
+                        echo "Deleting existing Kubernetes resources..."
+                        # Ignore errors if resources do not exist
+                        kubectl delete all --all
+                        kubectl delete pvc mysql-pvc --ignore-not-found=true
+                        kubectl delete pv mysql-pv --ignore-not-found=true
+                        
+                        echo "Deploying application using Kubernetes manifests..."
+                        kubectl apply -f secrets.yml
+                        kubectl apply -f configmap.yml
+                        kubectl apply -f configmap-mysql-init.yml
+                        kubectl apply -f pv.yml
+                        kubectl apply -f pvc.yml
+                        kubectl apply -f mysql-deployment.yml
+                        kubectl apply -f app-deployment.yml
+                        kubectl apply -f mysql-service.yml
+                        kubectl apply -f app-service.yml
+                        kubectl apply -f ingress.yml
+
+                        echo "Deployment completed!"
+                    """
+                }
+            }
+        }
+    }
+}
