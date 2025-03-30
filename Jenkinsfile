@@ -60,7 +60,7 @@ pipeline {
                             echo "Cloning source code inside the Pod..."
                             rm -rf solution_plus_project  # Clean old files if exist
                             git clone https://\$GITHUB_TOKEN@github.com/Salmaa-Hesham/solutionsplus-project.git
-                            cd solutionplus-project
+                            
                             git checkout salma
 
                             echo "Moving into application directory..."
