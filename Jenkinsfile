@@ -12,7 +12,7 @@ pipeline {
 
         stage('Clean old files if exist') {
             steps {
-                sh "rm -rf solutionplus-project"  // Clean old files if exist
+                sh "rm -rf ~/workspace/*"  // Clean old files if exist
             }
         }
 
@@ -58,7 +58,6 @@ pipeline {
                             set -e  # Exit on error
 
                             echo "Cloning source code inside the Pod..."
-                            rm -rf solution_plus_project  # Clean old files if exist
                             git clone https://\$GITHUB_TOKEN@github.com/Salmaa-Hesham/solutionsplus-project.git
                             cd solutionsplus-project
                             git checkout salma
