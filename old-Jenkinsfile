@@ -15,9 +15,9 @@ pipeline {
                     sh """
                         echo "Cloning source code inside the Pod..."
                         rm -rf ~/workspace/CI-CD-project/*  # Clean old files if exist
-                        mkdir -p trivy_reports_1
                         git clone https://\$GITHUB_TOKEN@github.com/Salmaa-Hesham/solutionsplus-project.git
                         cd solutionsplus-project
+                        mkdir -p trivy_reports_1
                         git checkout salma
                     """
                 }
@@ -62,6 +62,7 @@ pipeline {
                         cd ${appDir}
                         echo "Building and scanning Web App image..."
                         docker build -t \$IMAGE_REPO:web-img-latest -f Dockerfile .
+                        pwd
                         trivy image --exit-code 1 --no-progress \$IMAGE_REPO:web-img-latest > trivy_reports_1/web-img-report.txt 2>/dev/null || true
 
                         echo "Building and scanning MySQL image..."
