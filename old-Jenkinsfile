@@ -82,6 +82,8 @@ pipeline {
             steps {
                 script {
                     sh """
+                        echo "Ensuring trivy_reports_1 directory exists..."
+                        mkdir -p trivy_reports_1
                         echo "Scanning Web App image from Docker Hub..."
                         trivy image --exit-code 1 --no-progress \$IMAGE_REPO:web-img-latest > trivy_reports_1/web-img-report.txt 2>/dev/null || true
 
