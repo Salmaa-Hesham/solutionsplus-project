@@ -40,9 +40,11 @@ pipeline {
                     if (webImageExists != '200' || dbImageExists != '200') {
                         echo "Docker images are missing in the repository. Proceeding to build them..."
                         env.BUILD_IMAGES = 'true'  // Flag to trigger image building
+                        env.SCAN_FROM_HUB = 'false'
                     } else {
                         echo "Both Docker images are available in the repository. Proceeding with deployment."
                         env.BUILD_IMAGES = 'false'
+                        env.SCAN_FROM_HUB = 'true'
                     }
                 }
             }
@@ -58,11 +60,9 @@ pipeline {
                     
                     sh """
                         set -e  # Exit on error
-                        pwd
                         cd ${appDir}
                         echo "Building and scanning Web App image..."
                         docker build -t \$IMAGE_REPO:web-img-latest -f Dockerfile .
-                        pwd
                         trivy image --exit-code 1 --no-progress \$IMAGE_REPO:web-img-latest > trivy_reports_1/web-img-report.txt 2>/dev/null || true
 
                         echo "Building and scanning MySQL image..."
@@ -75,7 +75,27 @@ pipeline {
             }
         }
 
+        stage('Scan Existing Docker Hub Images') {
+            when {
+                expression { env.SCAN_FROM_HUB == 'true' } // Only scan if images exist in Docker Hub
+            }
+            steps {
+                script {
+                    sh """
+                        echo "Scanning Web App image from Docker Hub..."
+                        trivy image --exit-code 1 --no-progress \$IMAGE_REPO:web-img-latest > trivy_reports_1/web-img-report.txt 2>/dev/null || true
+
+                        echo "Scanning MySQL image from Docker Hub..."
+                        trivy image --exit-code 1 --no-progress \$IMAGE_REPO:db-img-latest > trivy_reports_1/db-img-report.txt 2>/dev/null || true
+                    """
+                }
+            }
+        }
+
         stage('Push Docker Images') {
+            when {
+                expression { env.BUILD_IMAGES == 'true' } // Only push if images were built
+            }
             steps {
                 script {
                     sh """
@@ -96,7 +116,6 @@ pipeline {
             }
         }
 
-
         stage('Archive Trivy Reports') {
             steps {
                 archiveArtifacts artifacts: 'trivy_reports_1/*.txt', fingerprint: true
@@ -111,7 +130,6 @@ pipeline {
                         pwd
                         cd manifest-files
                         echo "Deleting existing Kubernetes resources..."
-                        # Ignore errors if resources do not exist
                         kubectl delete all --all
                         kubectl delete pvc mysql-pvc --ignore-not-found=true
                         kubectl delete pv mysql-pv --ignore-not-found=true
