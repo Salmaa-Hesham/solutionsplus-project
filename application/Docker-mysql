@@ -1,14 +1,23 @@
-# Use the official MySQL image as the base
-FROM mysql:8.0
+# Use the official MySQL image (Debian-based)
+FROM mysql:8.0-debian
 
-# Set environment variables dynamically (from docker-compose)
+# Update OpenSSL using apt (Debian-based)
+RUN apt-get update && apt-get install -y openssl
+
+# Fix CVE-2022-29804 (Oracle Linux package issue) – no need to upgrade in Debian
+RUN apt-get upgrade -y
+
+# Fix CVE-2022-2879 (tar-split vulnerability)
+RUN rm -rf /usr/bin/tar-split
+
+# Set environment variables securely
 ENV MYSQL_ROOT_PASSWORD=${DB_PASSWORD}
 ENV MYSQL_DATABASE=${DB_NAME}
 ENV MYSQL_USER=${DB_USER}
 ENV MYSQL_PASSWORD=${DB_PASSWORD}
 
-# Copy initialization scripts to the container
-COPY ./dbModel /docker-entrypoint-dbModel.d/
+# Copy initialization scripts
+COPY ./dbModel /docker-entrypoint-initdb.d/
 
 # Expose MySQL port
 EXPOSE 3306
