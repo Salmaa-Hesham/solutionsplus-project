@@ -49,7 +49,7 @@ pipeline {
             }
         }
 
-        stage('Build and Scan Docker Images') {
+        stage('Build Docker Images') {
             when {
                 expression { env.BUILD_IMAGES == 'true' } // Only build images if they are missing
             }
@@ -72,7 +72,7 @@ pipeline {
             }
         }
 
-        stage('Scan Existing Docker Hub Images') {
+        stage('Scan Docker Images') {
             steps {
                 script {
                     sh """
