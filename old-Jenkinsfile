@@ -17,7 +17,6 @@ pipeline {
                         rm -rf ~/workspace/CI-CD-project/*  # Clean old files if exist
                         git clone https://\$GITHUB_TOKEN@github.com/Salmaa-Hesham/solutionsplus-project.git
                         cd solutionsplus-project
-                        mkdir -p trivy_reports_1
                         git checkout salma
                     """
                 }
@@ -63,11 +62,9 @@ pipeline {
                         cd ${appDir}
                         echo "Building and scanning Web App image..."
                         docker build -t \$IMAGE_REPO:web-img-latest -f Dockerfile .
-                        trivy image --exit-code 1 --no-progress \$IMAGE_REPO:web-img-latest > trivy_reports_1/web-img-report.txt 2>/dev/null || true
 
                         echo "Building and scanning MySQL image..."
                         docker build -t \$IMAGE_REPO:db-img-latest -f Docker-mysql .
-                        trivy image --exit-code 1 --no-progress \$IMAGE_REPO:db-img-latest > trivy_reports_1/db-img-report.txt 2>/dev/null || true
 
                         echo "Build and security scan completed!"
                     """
@@ -76,13 +73,9 @@ pipeline {
         }
 
         stage('Scan Existing Docker Hub Images') {
-            when {
-                expression { env.SCAN_FROM_HUB == 'true' } // Only scan if images exist in Docker Hub
-            }
             steps {
                 script {
                     sh """
-                        echo "Ensuring trivy_reports_1 directory exists..."
                         mkdir -p trivy_reports_1
                         echo "Scanning Web App image from Docker Hub..."
                         trivy image --exit-code 1 --no-progress \$IMAGE_REPO:web-img-latest > trivy_reports_1/web-img-report.txt 2>/dev/null || true
