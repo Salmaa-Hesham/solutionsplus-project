@@ -55,7 +55,7 @@ pipeline {
             }
             steps {
                 script {
-                    def appDir = "application"
+                    def appDir = "solutionsplus-project/application"
                     
                     sh """
                         set -e  # Exit on error
