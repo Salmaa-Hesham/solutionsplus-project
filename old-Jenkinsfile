@@ -120,17 +120,21 @@ pipeline {
 
         stage('Archive Trivy Reports') {
             steps {
+                script {
+                    sh "pwd" 
+                }
                 archiveArtifacts artifacts: 'trivy_reports_1/*.txt', fingerprint: true
                 echo "Trivy reports archived for review."
             }
         }
+
 
         stage('Deploy to Kubernetes') {
             steps {
                 script {
                     sh """
                         pwd
-                        cd manifest-files
+                        cd solutionsplus-project/manifest-files
                         echo "Deleting existing Kubernetes resources..."
                         kubectl delete all --all
                         kubectl delete pvc mysql-pvc --ignore-not-found=true
