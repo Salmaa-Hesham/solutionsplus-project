@@ -1,0 +1,276 @@
+## IF statements
+----------------------
+if [ command ]
+then
+
+else
+
+fi
+ 
+-eq -ne -gt  with math
+-f                         ## search for files
+-d                         ## search for directories
+exit 1                     ## it simply exits the code and doesn't run any thing after it
+
+## WHILE STATEMENTS
+----------------------
+while [ command ]
+do
+
+done
+
+## FOR LOOPS
+----------------------
+for [ command ]
+do 
+
+done
+
+## FUNCTIONS
+----------------------
+function() {
+}
+ 
+## CRON JOBS
+----------------------
+crontab -e
+
+## CHECK ERRORS IN SCRIPT
+----------------------
+##The -n option tells Bash to read the script and check for syntax errors without executing it.
+
+bash -n your_script.sh     
+
+
+
+where to store all bash scripts
+---> /usr/local/bin
+sudo mv myfile "destination"/newfilename
+export PATH=/usr/local/bin:$PATH            ##if needed
+
+find PATH filename                          ## to find files in certain path
+1> /dev/null                                ## send every normal output to null dir
+2> /dev/null                                ## send every error output to null dir
+&> file.txt                                 ## sends all the outputs to the file.txt
+1> results.txt   2> error.txt               ## sends each output to its right file
+
+read input;                                 ## to read an input from the user
+
+at "time in 24:60" -f "the file"            ## to schedule a time to run the specific file at it
+atq                                         ## to list the upcoming jobs
+artm "no."                                  ## to delete a job by its number 
+| tee -a $logfile                           ## put it next to the command to improve readability to log output and display progress simultaneously.
+ 
+
+SCRIPTS EX:
+#############################################################################################################################################
+command=/usr/bin/htop
+
+if [ -f $command ]
+then
+    echo "$command is available ,lets run it."
+else
+    echo "$command is NOT available ,installing it...."
+    sudo apt update && sudo apt install -y htop
+fi
+
+$command
+
+#######################################################################################################
+package=htop
+
+sudo apt install $package >> logs_file.log
+
+if [ $? -eq 0 ]
+then
+    echo "The installation of th $package was successful"
+else
+    echo "$package failed to install" >> fails.log
+fi 
+
+#######################################################################################################
+release_file=/etc/os-release
+
+if grep -q "Arch" $release_file
+then
+    sudo pacman -Sye
+fi
+
+if grep -q "Ubuntu" $release_file
+then
+    sudo apt update
+    sudo apt dist-upgrade
+fi
+
+#######################################################################################################
+for file in logfiles/*.log
+do
+    tar -czvf $file.tar.gz $file
+done
+
+for file in logfiles/*.log
+do
+    rm $file
+done
+
+#######################################################################################################
+release_file=/etc/os-release
+logfile=/var/log/results_update.log
+errorlog=/var/log/error_update.log
+
+if grep -q "Arch" $release_file
+then
+    sudo pacman -Sye 1>>$logfile 2>>$errorlog
+    if [ $? -ne 0 ]
+    then
+        echo "An error occurred please check /var/log/error_update.log"
+    fi
+fi
+
+if grep -q "Ubuntu" $release_file
+then
+    sudo apt update 1>>$logfile 2>>$errorlog
+    if [ $? -ne 0 ]
+    then
+        echo "An error occurred please check /var/log/error_update.log"
+    fi
+    sudo apt dist-upgrade -y 1>>$logfile 2>>$errorlog
+    if [ $? -ne 0 ]
+    then
+        echo "An error occurred please check /var/log/error_update.log"
+    fi
+fi
+
+#######################################################################################################
+## READ INPUTS
+echo "Enter your name: "
+read myname;
+echo "Your name is $myname" 
+
+#######################################################################################################
+check_exit() {
+    if [ $? -ne 0 ]
+    then
+        echo "An error occurred please check /var/log/error_update.log"
+    fi
+}
+
+#######################################################################################################
+release_file=/etc/os-release
+logfile=/var/log/results_update.log
+errorlog=/var/log/error_update.log
+
+check_exit() {
+    if [ $? -ne 0 ]
+    then
+        echo "An error occurred please check /var/log/error_update.log"
+    fi
+}
+
+if grep -q "Arch" $release_file
+then
+    sudo pacman -Sye 1>>$logfile 2>>$errorlog
+    check_exit    
+fi
+
+if grep -q "Ubuntu" $release_file
+then
+    sudo apt update 1>>$logfile 2>>$errorlog
+    check_exit
+
+    sudo apt dist-upgrade -y 1>>$logfile 2>>$errorlog
+    check_exit
+fi
+
+#######################################################################################################
+finished=0
+while [ $finished -ne 1 ]
+do
+    echo "What is your used Linux distribution. Please choose a number: "
+    echo "1- Arch"
+    echo "2- Centos"
+    echo "3- Debian"
+    echo "4- Mint"
+    echo "5- Ubuntu"
+    echo "6- Something else"
+    echo "7- Exit the script"
+
+    read distro;
+
+    case $distro in
+       1) echo "Arch is good";;
+       2) echo "Centos is great";;
+       3) echo "Debian is ok";;
+       4) echo "Mint is quiet";;
+       5) echo "Ubuntu is most popular";;
+       6) echo "There are many distribustion out there";;
+       7) finished=1;;
+       *) echo "you didn't enter an appropriate choice"
+    esac
+done
+
+echo "Thank you for using my code"
+
+#######################################################################################################
+## INSTALLING LEMP
+#!/bin/bash
+logfilen=/var/log/results_nginx.log
+errorlogn=/var/log/error_nginx.log
+
+logfilem=/var/log/results_mysql.log
+errorlogm=/var/log/error_mysql.log
+
+logfilep=/var/log/results_php.log
+errorlogp=/var/log/error_php.log
+
+
+check_error() {
+    if [ $? -ne 0 ]
+    then
+        echo "An error occurred please check $errorlog"
+        exit 1
+    fi
+}
+## Update the system
+echo "Ubdating the apt packages...."
+apt update
+apt upgrade -y
+
+## Install NGINX........
+if nginx -v >/dev/null 2>&1
+then
+    echo "Nginx is already installed"
+else
+    echo "Installing Nginx..."
+    apt install nginx -y  1>>$logfilen 2>>$errorlogn
+    check_error
+fi
+
+## Install MySQL......................
+if mysql --version >/dev/null 2>&1
+then
+    echo "Mysql service is already installed"
+else
+    echo "Installing Mysql..."
+    apt install mysql-server -y 1>>$logfilem 2>>$errorlogm
+    check_error
+fi
+
+## install php...........................
+if php --version >/dev/null 2>&1
+then
+    echo "PHP service is already installed"
+else
+    echo "Installing PHP..."
+    apt install php php-cli php-mbstring php-xml php-curl php-mysql -y 1>>$logfilep 2>>$errorlogp
+    check_error
+fi
+
+
+
+
+
+
+
+
+
